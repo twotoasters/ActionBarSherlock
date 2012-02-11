@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.internal.ActionBarSherlockCompat;
+import com.actionbarsherlock.internal.ActionBarSherlockLimited;
 import com.actionbarsherlock.internal.ActionBarSherlockNative;
 import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
@@ -35,6 +36,7 @@ import com.actionbarsherlock.view.MenuItem;
 public abstract class ActionBarSherlock {
     protected static final String TAG = "ActionBarSherlock";
     protected static final boolean DEBUG = true;
+    protected static final int SDK = Integer.parseInt(Build.VERSION.SDK);
 
     private static final Class<?>[] CONSTRUCTOR_ARGS = new Class[] { Activity.class, int.class };
 
@@ -103,10 +105,12 @@ public abstract class ActionBarSherlock {
      * @return Instance to interact with the action bar.
      */
     public static ActionBarSherlock wrap(Activity activity, int flags) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH || (flags & FLAG_ALWAYS_COMPAT) != 0) {
+        if (SDK >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && (flags & FLAG_ALWAYS_COMPAT) == 0) {
+            return new ActionBarSherlockNative(activity, flags);
+        } else if (SDK >= Build.VERSION_CODES.ECLAIR_MR1) {
             return new ActionBarSherlockCompat(activity, flags);
         } else {
-            return new ActionBarSherlockNative(activity, flags);
+            return new ActionBarSherlockLimited(activity, flags);
         }
     }
 

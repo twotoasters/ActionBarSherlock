@@ -15,6 +15,7 @@
  */
 package com.actionbarsherlock.internal.view.menu;
 
+import com.actionbarsherlock.internal.Helpers;
 import com.actionbarsherlock.internal.widget.IcsLinearLayout;
 
 import android.content.Context;
@@ -67,8 +68,8 @@ public class ActionMenuView extends IcsLinearLayout implements MenuBuilder.ItemI
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
-            super.onConfigurationChanged(newConfig);
+        if (Helpers.SDK_INT >= Build.VERSION_CODES.FROYO) {
+            //XXX super.onConfigurationChanged(newConfig);
             //TODO figure out a way to call this pre-2.2
         }
         mPresenter.updateMenuView(false);

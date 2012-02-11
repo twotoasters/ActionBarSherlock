@@ -2,39 +2,14 @@ package com.actionbarsherlock.internal;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static com.actionbarsherlock.internal.Helpers.getResources_getBoolean;
-
 import java.util.HashMap;
-
-import org.xmlpull.v1.XmlPullParser;
-
-import com.actionbarsherlock.ActionBarSherlock;
-import com.actionbarsherlock.R;
-import com.actionbarsherlock.app.ActionBar;
-import com.actionbarsherlock.internal.app.ActionBarImpl;
-import com.actionbarsherlock.internal.view.StandaloneActionMode;
-import com.actionbarsherlock.internal.view.menu.ActionMenuPresenter;
-import com.actionbarsherlock.internal.view.menu.MenuBuilder;
-import com.actionbarsherlock.internal.view.menu.MenuItemImpl;
-import com.actionbarsherlock.internal.view.menu.MenuPresenter;
-import com.actionbarsherlock.internal.widget.ActionBarContainer;
-import com.actionbarsherlock.internal.widget.ActionBarContextView;
-import com.actionbarsherlock.internal.widget.ActionBarView;
-import com.actionbarsherlock.internal.widget.IcsProgressBar;
-import com.actionbarsherlock.view.ActionMode;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
-import android.content.res.XmlResourceParser;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.AndroidRuntimeException;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
@@ -42,18 +17,27 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewStub;
 import android.view.Window;
-import android.view.accessibility.AccessibilityEvent;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
+import com.actionbarsherlock.ActionBarSherlock;
+import com.actionbarsherlock.R;
+import com.actionbarsherlock.app.ActionBar;
+import com.actionbarsherlock.internal.app.ActionBarLimitedImpl;
+import com.actionbarsherlock.internal.view.menu.ActionMenuPresenter;
+import com.actionbarsherlock.internal.view.menu.MenuBuilder;
+import com.actionbarsherlock.internal.view.menu.MenuItemImpl;
+import com.actionbarsherlock.internal.view.menu.MenuPresenter;
+import com.actionbarsherlock.internal.widget.ActionBarLimitedContainer;
+import com.actionbarsherlock.internal.widget.ActionBarLimitedView;
+import com.actionbarsherlock.view.ActionMode;
+import com.actionbarsherlock.view.ActionMode.Callback;
+import com.actionbarsherlock.view.MenuItem;
 
-public class ActionBarSherlockCompat extends ActionBarSherlock {
+public class ActionBarSherlockLimited extends ActionBarSherlock {
     /** Window features which are enabled by default. */
     protected static final int DEFAULT_FEATURES = 0;
 
 
-    public ActionBarSherlockCompat(Activity activity, int flags) {
+    public ActionBarSherlockLimited(Activity activity, int flags) {
         super(activity, flags);
     }
 
@@ -81,23 +65,13 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
     private boolean mIsTitleReady = false;
 
     /** Implementation which backs the action bar interface API. */
-    private ActionBarImpl mActionBar;
+    private ActionBarLimitedImpl mActionBar;
     /** Main action bar view which displays the core content. */
-    private ActionBarView mActionBarView;
+    private ActionBarLimitedView mActionBarView;
     /** Relevant window and action bar features flags. */
     private int mFeatures = DEFAULT_FEATURES;
     /** Relevant user interface option flags. */
     private int mUiOptions = 0;
-
-    /** Decor indeterminate progress indicator. */
-    private IcsProgressBar mCircularProgressBar;
-    /** Decor progress indicator. */
-    private IcsProgressBar mHorizontalProgressBar;
-
-    /** Current displayed context action bar, if any. */
-    private ActionMode mActionMode;
-    /** Parent view in which the context action bar is displayed. */
-    private ActionBarContextView mActionModeView;
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -195,7 +169,7 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
             return;
         }
 
-        mActionBar = new ActionBarImpl(mActivity, mFeatures);
+        mActionBar = new ActionBarLimitedImpl(mActivity, mFeatures);
 
         if (!mIsDelegate) {
             //We may never get another chance to set the title
@@ -209,47 +183,8 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
     }
 
     @Override
-    public ActionMode startActionMode(ActionMode.Callback callback) {
-        if (mActionMode != null) {
-            mActionMode.finish();
-        }
-
-        final ActionMode.Callback wrappedCallback = new ActionModeCallbackWrapper(callback);
-        ActionMode mode = null;
-
-        //Emulate Activity's onWindowStartingActionMode:
-        initActionBar();
-        if (mActionBar != null) {
-            mode = mActionBar.startActionMode(wrappedCallback);
-        }
-
-        if (mode != null) {
-            mActionMode = mode;
-        } else {
-            if (mActionModeView == null) {
-                ViewStub stub = (ViewStub)mDecor.findViewById(R.id.abs__action_mode_bar_stub);
-                if (stub != null) {
-                    mActionModeView = (ActionBarContextView)stub.inflate();
-                }
-            }
-            if (mActionModeView != null) {
-                mActionModeView.killMode();
-                mode = new StandaloneActionMode(mActivity, mActionModeView, wrappedCallback, true);
-                if (callback.onCreateActionMode(mode, mode.getMenu())) {
-                    mode.invalidate();
-                    mActionModeView.initForMode(mode);
-                    mActionModeView.setVisibility(View.VISIBLE);
-                    mActionMode = mode;
-                    mActionModeView.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED);
-                } else {
-                    mActionMode = null;
-                }
-            }
-        }
-        if (mActionMode != null && mActivity instanceof OnActionModeStartedListener) {
-            ((OnActionModeStartedListener)mActivity).onActionModeStarted(mActionMode);
-        }
-        return mActionMode;
+    public ActionMode startActionMode(Callback callback) {
+        return null;
     }
 
 
@@ -267,15 +202,6 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
     }
 
     @Override
-    public void dispatchPostResume() {
-        if (DEBUG) Log.d(TAG, "[dispatchPostResume]");
-
-        if (mActionBar != null) {
-            mActionBar.setShowHideAnimationEnabled(true);
-        }
-    }
-
-    @Override
     public void dispatchPause() {
         if (DEBUG) Log.d(TAG, "[dispatchPause]");
 
@@ -288,9 +214,9 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
     public void dispatchStop() {
         if (DEBUG) Log.d(TAG, "[dispatchStop]");
 
-        if (mActionBar != null) {
-            mActionBar.setShowHideAnimationEnabled(false);
-        }
+        //if (mActionBar != null) {
+        //    mActionBar.setShowHideAnimationEnabled(false);
+        //}
     }
 
     @Override
@@ -461,32 +387,32 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             final int action = event.getAction();
             // Back cancels action modes first.
-            if (mActionMode != null) {
-                if (action == KeyEvent.ACTION_UP) {
-                    mActionMode.finish();
-                }
-                if (DEBUG) Log.d(TAG, "[dispatchKeyEvent] returning true");
-                return true;
-            }
+            //if (mActionMode != null) {
+            //    if (action == KeyEvent.ACTION_UP) {
+            //        mActionMode.finish();
+            //    }
+            //    if (DEBUG) Log.d(TAG, "[dispatchKeyEvent] returning true");
+            //    return true;
+            //}
 
             // Next collapse any expanded action views.
-            if (mActionBar != null && mActionBarView.hasExpandedActionView()) {
-                if (action == KeyEvent.ACTION_UP) {
-                    mActionBarView.collapseActionView();
-                }
-                if (DEBUG) Log.d(TAG, "[dispatchKeyEvent] returning true");
-                return true;
-            }
+            //if (mActionBar != null && mActionBarView.hasExpandedActionView()) {
+            //    if (action == KeyEvent.ACTION_UP) {
+            //        mActionBarView.collapseActionView();
+            //    }
+            //    if (DEBUG) Log.d(TAG, "[dispatchKeyEvent] returning true");
+            //    return true;
+            //}
         }
 
         if (keyCode == KeyEvent.KEYCODE_MENU && event.getAction() == KeyEvent.ACTION_UP && isReservingOverflow()) {
-            if (mActionMode == null) {
+            //if (mActionMode == null) {
                 if (mActionBarView.isOverflowMenuShowing()) {
                     mActionBarView.hideOverflowMenu();
                 } else {
                     mActionBarView.showOverflowMenu();
                 }
-            }
+            //}
             if (DEBUG) Log.d(TAG, "[dispatchKeyEvent] returning true");
             return true;
         }
@@ -503,21 +429,21 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
         }
         if (mContentParent == null) {
             mContentParent = generateLayout();
-            mActionBarView = (ActionBarView)mDecor.findViewById(R.id.abs__action_bar);
+            mActionBarView = (ActionBarLimitedView)mDecor.findViewById(R.id.abs__action_bar);
             if (mActionBarView != null) {
                 mActionBarView.setWindowCallback(mWindowCallback);
                 if (mActionBarView.getTitle() == null) {
                     mActionBarView.setWindowTitle(mActivity.getTitle());
                 }
                 if (hasFeature(Window.FEATURE_PROGRESS)) {
-                    mActionBarView.initProgress();
+                    //mActionBarView.initProgress();
                 }
                 if (hasFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
-                    mActionBarView.initIndeterminateProgress();
+                    //mActionBarView.initIndeterminateProgress();
                 }
 
                 //Since we don't require onCreate dispatching, parse for uiOptions here
-                mUiOptions = loadUiOptionsFromManifest(mActivity);
+                mUiOptions = 0;//loadUiOptionsFromManifest(mActivity);
 
                 boolean splitActionBar = false;
                 final boolean splitWhenNarrow = (mUiOptions & ActivityInfo.UIOPTION_SPLIT_ACTION_BAR_WHEN_NARROW) != 0;
@@ -528,16 +454,16 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
                             .obtainStyledAttributes(R.styleable.SherlockTheme)
                             .getBoolean(R.styleable.SherlockTheme_windowSplitActionBar, false);
                 }
-                final ActionBarContainer splitView = (ActionBarContainer)mDecor.findViewById(R.id.abs__split_action_bar);
+                final ActionBarLimitedContainer splitView = (ActionBarLimitedContainer)mDecor.findViewById(R.id.abs__split_action_bar);
                 if (splitView != null) {
                     mActionBarView.setSplitView(splitView);
                     mActionBarView.setSplitActionBar(splitActionBar);
                     mActionBarView.setSplitWhenNarrow(splitWhenNarrow);
 
-                    mActionModeView = (ActionBarContextView)mDecor.findViewById(R.id.abs__action_context_bar);
-                    mActionModeView.setSplitView(splitView);
-                    mActionModeView.setSplitActionBar(splitActionBar);
-                    mActionModeView.setSplitWhenNarrow(splitWhenNarrow);
+                    //mActionModeView = (ActionBarContextView)mDecor.findViewById(R.id.abs__action_context_bar);
+                    //mActionModeView.setSplitView(splitView);
+                    //mActionModeView.setSplitActionBar(splitActionBar);
+                    //mActionModeView.setSplitWhenNarrow(splitWhenNarrow);
                 } else if (splitActionBar) {
                     Log.e(TAG, "Requested split action bar with incompatible window decor! Ignoring request.");
                 }
@@ -723,193 +649,8 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
 
     private void onIntChanged(int featureId, int value) {
         if (featureId == Window.FEATURE_PROGRESS || featureId == Window.FEATURE_INDETERMINATE_PROGRESS) {
-            updateProgressBars(value);
+            //updateProgressBars(value);
         }
-    }
-
-    private void updateProgressBars(int value) {
-        IcsProgressBar circularProgressBar = getCircularProgressBar(true);
-        IcsProgressBar horizontalProgressBar = getHorizontalProgressBar(true);
-
-        final int features = mFeatures;//getLocalFeatures();
-        if (value == Window.PROGRESS_VISIBILITY_ON) {
-            if ((features & (1 << Window.FEATURE_PROGRESS)) != 0) {
-                int level = horizontalProgressBar.getProgress();
-                int visibility = (horizontalProgressBar.isIndeterminate() || level < 10000) ?
-                        View.VISIBLE : View.INVISIBLE;
-                horizontalProgressBar.setVisibility(visibility);
-            }
-            if ((features & (1 << Window.FEATURE_INDETERMINATE_PROGRESS)) != 0) {
-                circularProgressBar.setVisibility(View.VISIBLE);
-            }
-        } else if (value == Window.PROGRESS_VISIBILITY_OFF) {
-            if ((features & (1 << Window.FEATURE_PROGRESS)) != 0) {
-                horizontalProgressBar.setVisibility(View.GONE);
-            }
-            if ((features & (1 << Window.FEATURE_INDETERMINATE_PROGRESS)) != 0) {
-                circularProgressBar.setVisibility(View.GONE);
-            }
-        } else if (value == Window.PROGRESS_INDETERMINATE_ON) {
-            horizontalProgressBar.setIndeterminate(true);
-        } else if (value == Window.PROGRESS_INDETERMINATE_OFF) {
-            horizontalProgressBar.setIndeterminate(false);
-        } else if (Window.PROGRESS_START <= value && value <= Window.PROGRESS_END) {
-            // We want to set the progress value before testing for visibility
-            // so that when the progress bar becomes visible again, it has the
-            // correct level.
-            horizontalProgressBar.setProgress(value - Window.PROGRESS_START);
-
-            if (value < Window.PROGRESS_END) {
-                showProgressBars(horizontalProgressBar, circularProgressBar);
-            } else {
-                hideProgressBars(horizontalProgressBar, circularProgressBar);
-            }
-        } else if (Window.PROGRESS_SECONDARY_START <= value && value <= Window.PROGRESS_SECONDARY_END) {
-            horizontalProgressBar.setSecondaryProgress(value - Window.PROGRESS_SECONDARY_START);
-
-            showProgressBars(horizontalProgressBar, circularProgressBar);
-        }
-    }
-
-    private void showProgressBars(IcsProgressBar horizontalProgressBar, IcsProgressBar spinnyProgressBar) {
-        final int features = mFeatures;//getLocalFeatures();
-        if ((features & (1 << Window.FEATURE_INDETERMINATE_PROGRESS)) != 0 &&
-                spinnyProgressBar.getVisibility() == View.INVISIBLE) {
-            spinnyProgressBar.setVisibility(View.VISIBLE);
-        }
-        // Only show the progress bars if the primary progress is not complete
-        if ((features & (1 << Window.FEATURE_PROGRESS)) != 0 &&
-                horizontalProgressBar.getProgress() < 10000) {
-            horizontalProgressBar.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void hideProgressBars(IcsProgressBar horizontalProgressBar, IcsProgressBar spinnyProgressBar) {
-        final int features = mFeatures;//getLocalFeatures();
-        Animation anim = AnimationUtils.loadAnimation(mActivity, android.R.anim.fade_out);
-        anim.setDuration(1000);
-        if ((features & (1 << Window.FEATURE_INDETERMINATE_PROGRESS)) != 0 &&
-                spinnyProgressBar.getVisibility() == View.VISIBLE) {
-            spinnyProgressBar.startAnimation(anim);
-            spinnyProgressBar.setVisibility(View.INVISIBLE);
-        }
-        if ((features & (1 << Window.FEATURE_PROGRESS)) != 0 &&
-                horizontalProgressBar.getVisibility() == View.VISIBLE) {
-            horizontalProgressBar.startAnimation(anim);
-            horizontalProgressBar.setVisibility(View.INVISIBLE);
-        }
-    }
-
-    private IcsProgressBar getCircularProgressBar(boolean shouldInstallDecor) {
-        if (mCircularProgressBar != null) {
-            return mCircularProgressBar;
-        }
-        if (mContentParent == null && shouldInstallDecor) {
-            installDecor();
-        }
-        mCircularProgressBar = (IcsProgressBar)mDecor.findViewById(R.id.abs__progress_circular);
-        if (mCircularProgressBar != null) {
-            mCircularProgressBar.setVisibility(View.INVISIBLE);
-        }
-        return mCircularProgressBar;
-    }
-
-    private IcsProgressBar getHorizontalProgressBar(boolean shouldInstallDecor) {
-        if (mHorizontalProgressBar != null) {
-            return mHorizontalProgressBar;
-        }
-        if (mContentParent == null && shouldInstallDecor) {
-            installDecor();
-        }
-        mHorizontalProgressBar = (IcsProgressBar)mDecor.findViewById(R.id.abs__progress_horizontal);
-        if (mHorizontalProgressBar != null) {
-            mHorizontalProgressBar.setVisibility(View.INVISIBLE);
-        }
-        return mHorizontalProgressBar;
-    }
-
-    static int loadUiOptionsFromManifest(Activity activity) {
-        int uiOptions = 0;
-        try {
-            final String thisPackage = activity.getClass().getName();
-            if (DEBUG) Log.i(TAG, "Parsing AndroidManifest.xml for " + thisPackage);
-
-            final String packageName = activity.getApplicationInfo().packageName;
-            final AssetManager am = activity.createPackageContext(packageName, 0).getAssets();
-            final XmlResourceParser xml = am.openXmlResourceParser("AndroidManifest.xml");
-
-            int eventType = xml.getEventType();
-            while (eventType != XmlPullParser.END_DOCUMENT) {
-                if (eventType == XmlPullParser.START_TAG) {
-                    String name = xml.getName();
-
-                    if ("application".equals(name)) {
-                        //Check if the <application> has the attribute
-                        if (DEBUG) Log.d(TAG, "Got <application>");
-
-                        for (int i = xml.getAttributeCount() - 1; i >= 0; i--) {
-                            if (DEBUG) Log.d(TAG, xml.getAttributeName(i) + ": " + xml.getAttributeValue(i));
-
-                            if ("uiOptions".equals(xml.getAttributeName(i))) {
-                                uiOptions = xml.getAttributeIntValue(i, 0);
-                                break; //out of for loop
-                            }
-                        }
-                    } else if ("activity".equals(name)) {
-                        //Check if the <activity> is us and has the attribute
-                        if (DEBUG) Log.d(TAG, "Got <activity>");
-                        Integer activityUiOptions = null;
-                        String activityPackage = null;
-                        boolean isOurActivity = false;
-
-                        for (int i = xml.getAttributeCount() - 1; i >= 0; i--) {
-                            if (DEBUG) Log.d(TAG, xml.getAttributeName(i) + ": " + xml.getAttributeValue(i));
-
-                            //We need both uiOptions and name attributes
-                            String attrName = xml.getAttributeName(i);
-                            if ("uiOptions".equals(attrName)) {
-                                activityUiOptions = xml.getAttributeIntValue(i, 0);
-                            } else if ("name".equals(attrName)) {
-                                activityPackage = cleanActivityName(packageName, xml.getAttributeValue(i));
-                                if (!thisPackage.equals(activityPackage)) {
-                                    break; //out of for loop
-                                }
-                                isOurActivity = true;
-                            }
-
-                            //Make sure we have both attributes before processing
-                            if ((activityUiOptions != null) && (activityPackage != null)) {
-                                //Our activity, uiOptions specified, override with our value
-                                uiOptions = activityUiOptions.intValue();
-                            }
-                        }
-                        if (isOurActivity) {
-                            //If we matched our activity but it had no logo don't
-                            //do any more processing of the manifest
-                            break;
-                        }
-                    }
-                }
-                eventType = xml.nextToken();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (DEBUG) Log.i(TAG, "Returning " + Integer.toHexString(uiOptions));
-        return uiOptions;
-    }
-
-    public static String cleanActivityName(String manifestPackage, String activityName) {
-        if (activityName.charAt(0) == '.') {
-            //Relative activity name (e.g., android:name=".ui.SomeClass")
-            return manifestPackage + activityName;
-        }
-        if (activityName.indexOf('.', 1) == -1) {
-            //Unqualified activity name (e.g., android:name="SomeClass")
-            return manifestPackage + "." + activityName;
-        }
-        //Fully-qualified activity name (e.g., "com.my.package.SomeClass")
-        return activityName;
     }
 
     private ViewGroup generateLayout() {
@@ -941,13 +682,13 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
 
         int layoutResource;
         if (hasFeature(Window.FEATURE_ACTION_BAR)) {
-            if (hasFeature(Window.FEATURE_ACTION_BAR_OVERLAY)) {
-                layoutResource = R.layout.abs__screen_action_bar_overlay;
-            } else {
-                layoutResource = R.layout.abs__screen_action_bar;
-            }
-        } else if (hasFeature(Window.FEATURE_ACTION_MODE_OVERLAY)) {
-            layoutResource = R.layout.abs__screen_simple_overlay_action_mode;
+            //if (hasFeature(Window.FEATURE_ACTION_BAR_OVERLAY)) {
+            //    layoutResource = R.layout.abs__screen_action_bar_overlay;
+            //} else {
+                layoutResource = R.layout.abs__screen_action_bar_limited;
+            //}
+        //} else if (hasFeature(Window.FEATURE_ACTION_MODE_OVERLAY)) {
+        //    layoutResource = R.layout.abs__screen_simple_overlay_action_mode;
         } else {
             layoutResource = R.layout.abs__screen_simple;
         }
@@ -965,10 +706,10 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
         contentParent.setId(android.R.id.content);
 
         if (hasFeature(Window.FEATURE_INDETERMINATE_PROGRESS)) {
-            IcsProgressBar progress = getCircularProgressBar(false);
-            if (progress != null) {
-                progress.setIndeterminate(true);
-            }
+            //IcsProgressBar progress = getCircularProgressBar(false);
+            //if (progress != null) {
+            //    progress.setIndeterminate(true);
+            //}
         }
 
         return contentParent;
@@ -986,41 +727,6 @@ public class ActionBarSherlockCompat extends ActionBarSherlock {
                 mActionBarView.hideOverflowMenu();
             }
             return;
-        }
-    }
-
-    /**
-     * Clears out internal reference when the action mode is destroyed.
-     */
-    private class ActionModeCallbackWrapper implements ActionMode.Callback {
-        private final ActionMode.Callback mWrapped;
-
-        public ActionModeCallbackWrapper(ActionMode.Callback wrapped) {
-            mWrapped = wrapped;
-        }
-
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            return mWrapped.onCreateActionMode(mode, menu);
-        }
-
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            return mWrapped.onPrepareActionMode(mode, menu);
-        }
-
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            return mWrapped.onActionItemClicked(mode, item);
-        }
-
-        public void onDestroyActionMode(ActionMode mode) {
-            mWrapped.onDestroyActionMode(mode);
-            if (mActionModeView != null) {
-                mActionModeView.setVisibility(View.GONE);
-                mActionModeView.removeAllViews();
-            }
-            if (mActivity instanceof OnActionModeFinishedListener) {
-                ((OnActionModeFinishedListener)mActivity).onActionModeFinished(mActionMode);
-            }
-            mActionMode = null;
         }
     }
 }

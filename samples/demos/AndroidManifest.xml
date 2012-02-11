@@ -6,7 +6,7 @@
     android:versionName="4.0.0-SNAPSHOT">
 
     <uses-sdk
-        android:minSdkVersion="7"
+        android:minSdkVersion="3"
         android:targetSdkVersion="15" />
 
     <uses-feature

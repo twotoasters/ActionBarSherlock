@@ -31,7 +31,6 @@ import android.util.SparseBooleanArray;
 import android.view.SoundEffectConstants;
 import android.view.View;
 import android.view.View.MeasureSpec;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
@@ -42,7 +41,7 @@ import com.actionbarsherlock.internal.view.menu.ActionMenuView.ActionMenuChildVi
 import com.actionbarsherlock.view.ActionProvider;
 import com.actionbarsherlock.view.MenuItem;
 
-import static com.actionbarsherlock.internal.ActionBarSherlockCompat.getResources_getInteger;
+import static com.actionbarsherlock.internal.Helpers.getResources_getInteger;
 
 /**
  * MenuPresenter for building action menus as seen in the action bar and action modes.
@@ -131,10 +130,17 @@ public class ActionMenuPresenter extends BaseMenuPresenter
             return true;
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB);
+        int sdk = Integer.parseInt(Build.VERSION.SDK);
+        if (sdk < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            return (sdk >= Build.VERSION_CODES.HONEYCOMB);
         } else {
-            return !ViewConfiguration.get(context).hasPermanentMenuKey();
+            return !ViewConfiguration.hasPermanentMenuKey(context);
+        }
+    }
+
+    private static class ViewConfiguration {
+        public static boolean hasPermanentMenuKey(Context context) {
+            return android.view.ViewConfiguration.get(context).hasPermanentMenuKey();
         }
     }
 
