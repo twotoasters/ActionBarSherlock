@@ -16,8 +16,11 @@
 
 package com.actionbarsherlock.internal.app;
 
+import static com.actionbarsherlock.internal.ResourcesCompat.getResources_getBoolean;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -32,16 +35,19 @@ import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.ImageView;
 import android.widget.SpinnerAdapter;
+
 import com.actionbarsherlock.R;
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.internal.nineoldandroids.animation.Animator;
+import com.actionbarsherlock.internal.nineoldandroids.animation.Animator.AnimatorListener;
 import com.actionbarsherlock.internal.nineoldandroids.animation.AnimatorListenerAdapter;
 import com.actionbarsherlock.internal.nineoldandroids.animation.AnimatorSet;
 import com.actionbarsherlock.internal.nineoldandroids.animation.ObjectAnimator;
-import com.actionbarsherlock.internal.nineoldandroids.animation.Animator.AnimatorListener;
 import com.actionbarsherlock.internal.nineoldandroids.widget.NineFrameLayout;
 import com.actionbarsherlock.internal.view.menu.MenuBuilder;
 import com.actionbarsherlock.internal.view.menu.MenuPopupHelper;
@@ -54,7 +60,6 @@ import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
-import static com.actionbarsherlock.internal.ResourcesCompat.getResources_getBoolean;
 
 /**
  * ActionBarImpl is the ActionBar implementation used
@@ -246,10 +251,12 @@ public class ActionBarImpl extends ActionBar {
         }
     }
 
+    @Override
     public void addOnMenuVisibilityListener(OnMenuVisibilityListener listener) {
         mMenuVisibilityListeners.add(listener);
     }
 
+    @Override
     public void removeOnMenuVisibilityListener(OnMenuVisibilityListener listener) {
         mMenuVisibilityListeners.remove(listener);
     }
@@ -311,6 +318,7 @@ public class ActionBarImpl extends ActionBar {
         setSubtitle(mContext.getString(resId));
     }
 
+    @Override
     public void setSelectedNavigationItem(int position) {
         switch (mActionView.getNavigationMode()) {
         case NAVIGATION_MODE_TABS:
@@ -325,6 +333,7 @@ public class ActionBarImpl extends ActionBar {
         }
     }
 
+    @Override
     public void removeAllTabs() {
         cleanupTabs();
     }
@@ -340,53 +349,95 @@ public class ActionBarImpl extends ActionBar {
         mSavedTabPosition = INVALID_POSITION;
     }
 
+    @Override
     public void setTitle(CharSequence title) {
         mActionView.setTitle(title);
     }
 
+    @Override
     public void setSubtitle(CharSequence subtitle) {
         mActionView.setSubtitle(subtitle);
     }
 
+    @Override
     public void setDisplayOptions(int options) {
         mActionView.setDisplayOptions(options);
     }
 
+    @Override
     public void setDisplayOptions(int options, int mask) {
         final int current = mActionView.getDisplayOptions();
         mActionView.setDisplayOptions((options & mask) | (current & ~mask));
     }
 
+    @Override
     public void setBackgroundDrawable(Drawable d) {
         mContainerView.setPrimaryBackground(d);
     }
 
+    @Override
     public void setStackedBackgroundDrawable(Drawable d) {
         mContainerView.setStackedBackground(d);
     }
 
+    @Override
     public void setSplitBackgroundDrawable(Drawable d) {
         if (mSplitView != null) {
             mSplitView.setSplitBackground(d);
         }
     }
 
+    @Override
+    public void setHomeAsUpIndicator(Drawable drawable) {
+        final View home = mActivity.findViewById(R.id.abs__home);
+        if (home == null) {
+            // Action bar doesn't have a known configuration, implementation was changed unexpectedly
+            return;
+        }
+
+        final ViewGroup parent = (ViewGroup) home.getParent();
+        final int childCount = parent.getChildCount();
+        if (childCount != 2) {
+            // No idea which one will be the right one, implementation was changed unexpectedly
+            return;
+        }
+
+        final View first = parent.getChildAt(0);
+        final View second = parent.getChildAt(1);
+        final View up = first.getId() == R.id.abs__home ? second : first;
+
+        if (up instanceof ImageView) {
+            ImageView upIndicatorView = (ImageView) up;
+            upIndicatorView.setImageDrawable(drawable);
+        }
+    }
+
+    @Override
+    public void setHomeActionContentDescription(int contentResId) {
+        mActionView.setHomeButtonContentDescription(contentResId);
+    }
+
+    @Override
     public View getCustomView() {
         return mActionView.getCustomNavigationView();
     }
 
+    @Override
     public CharSequence getTitle() {
         return mActionView.getTitle();
     }
 
+    @Override
     public CharSequence getSubtitle() {
         return mActionView.getSubtitle();
     }
 
+    @Override
     public int getNavigationMode() {
         return mActionView.getNavigationMode();
     }
 
+    @Override
     public int getDisplayOptions() {
         return mActionView.getDisplayOptions();
     }
@@ -614,6 +665,7 @@ public class ActionBarImpl extends ActionBar {
         }
     }
 
+    @Override
     public boolean isShowing() {
         return mContainerView.getVisibility() == View.VISIBLE;
     }
@@ -633,6 +685,7 @@ public class ActionBarImpl extends ActionBar {
         }
     }
 
+    @Override
     public Context getThemedContext() {
         if (mThemedContext == null) {
             TypedValue outValue = new TypedValue();
@@ -766,6 +819,7 @@ public class ActionBarImpl extends ActionBar {
             return mCustomView != null ? mCustomView.get() : null;
         }
 
+        @Override
         public boolean onMenuItemSelected(MenuBuilder menu, MenuItem item) {
             if (mCallback != null) {
                 return mCallback.onActionItemClicked(this, item);
@@ -793,6 +847,7 @@ public class ActionBarImpl extends ActionBar {
         public void onCloseSubMenu(SubMenuBuilder menu) {
         }
 
+        @Override
         public void onMenuModeChange(MenuBuilder menu) {
             if (mCallback == null) {
                 return;

@@ -16,7 +16,11 @@
 
 package com.actionbarsherlock.internal.widget;
 
+import static com.actionbarsherlock.internal.ResourcesCompat.getResources_getBoolean;
+
 import org.xmlpull.v1.XmlPullParser;
+
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -63,8 +67,6 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.view.Window;
 import com.actionbarsherlock.view.font.CustomFontHelper;
-
-import static com.actionbarsherlock.internal.ResourcesCompat.getResources_getBoolean;
 
 /**
  * @hide
@@ -145,11 +147,13 @@ public class ActionBarView extends AbsActionBarView {
     @SuppressWarnings("rawtypes")
     private final IcsAdapterView.OnItemSelectedListener mNavItemSelectedListener =
             new IcsAdapterView.OnItemSelectedListener() {
+        @Override
         public void onItemSelected(IcsAdapterView parent, View view, int position, long id) {
             if (mCallback != null) {
                 mCallback.onNavigationItemSelected(position, id);
             }
         }
+        @Override
         public void onNothingSelected(IcsAdapterView parent) {
             // Do nothing
         }
@@ -166,11 +170,13 @@ public class ActionBarView extends AbsActionBarView {
     };
 
     private final OnClickListener mUpClickListener = new OnClickListener() {
+        @Override
         public void onClick(View v) {
             mWindowCallback.onMenuItemSelected(Window.FEATURE_OPTIONS_PANEL, mLogoNavItem);
         }
     };
 
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     public ActionBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -632,6 +638,10 @@ public class ActionBarView extends AbsActionBarView {
             mHomeLayout.setContentDescription(mContext.getResources().getText(
                     R.string.abs__action_bar_home_description));
         }
+    }
+
+    public void setHomeButtonContentDescription(int contentResId) {
+        mHomeLayout.setContentDescription(mContext.getResources().getText(contentResId));
     }
 
     public void setDisplayOptions(int options) {
@@ -1286,10 +1296,12 @@ public class ActionBarView extends AbsActionBarView {
 
         public static final Parcelable.Creator<SavedState> CREATOR =
                 new Parcelable.Creator<SavedState>() {
+            @Override
             public SavedState createFromParcel(Parcel in) {
                 return new SavedState(in);
             }
 
+            @Override
             public SavedState[] newArray(int size) {
                 return new SavedState[size];
             }
@@ -1323,6 +1335,7 @@ public class ActionBarView extends AbsActionBarView {
             return true;
         }
 
+        @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
         @Override
         public void onPopulateAccessibilityEvent(AccessibilityEvent event) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
@@ -1334,6 +1347,7 @@ public class ActionBarView extends AbsActionBarView {
             }
         }
 
+        @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
         @Override
         public boolean dispatchHoverEvent(MotionEvent event) {
             // Don't allow children to hover; we want this to be treated as a single component.
